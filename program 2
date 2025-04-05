@@ -1,0 +1,89 @@
+<%@ page import="java.sql.*" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%
+    // JDBC configuration
+    String jdbcURL = "jdbc:mysql://localhost:3306/your_database";
+    String dbUser = "your_username";
+    String dbPass = "your_password";
+
+    Connection conn = null;
+    PreparedStatement ps = null;
+    Statement stmt = null;
+    ResultSet rs = null;
+
+    String empId = request.getParameter("empId");
+%>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Employee Directory</title>
+</head>
+<body>
+    <h2>Employee Directory</h2>
+
+    <!-- Search Form -->
+    <form method="get" action="employee.jsp">
+        Search by Employee ID:
+        <input type="text" name="empId" />
+        <input type="submit" value="Search" />
+    </form>
+
+    <hr>
+
+<%
+    try {
+        Class.forName("com.mysql.cj.jdbc.Driver");
+        conn = DriverManager.getConnection(jdbcURL, dbUser, dbPass);
+
+        if (empId != null && !empId.trim().isEmpty()) {
+            // Search by ID
+            ps = conn.prepareStatement("SELECT * FROM employees WHERE id = ?");
+            ps.setInt(1, Integer.parseInt(empId));
+            rs = ps.executeQuery();
+
+            if (rs.next()) {
+%>
+                <h3>Employee Found:</h3>
+                ID: <%= rs.getInt("id") %><br>
+                Name: <%= rs.getString("name") %><br>
+                Department: <%= rs.getString("department") %><br>
+<%
+            } else {
+%>
+                <p>No employee found with ID: <%= empId %></p>
+<%
+            }
+            rs.close();
+            ps.close();
+        }
+
+        // Show all employees
+        stmt = conn.createStatement();
+        rs = stmt.executeQuery("SELECT * FROM employees");
+%>
+        <h3>All Employees:</h3>
+        <table border="1" cellpadding="5">
+            <tr><th>ID</th><th>Name</th><th>Department</th></tr>
+<%
+        while (rs.next()) {
+%>
+            <tr>
+                <td><%= rs.getInt("id") %></td>
+                <td><%= rs.getString("name") %></td>
+                <td><%= rs.getString("department") %></td>
+            </tr>
+<%
+        }
+    } catch (Exception e) {
+%>
+    <p style="color:red;">Error: <%= e.getMessage() %></p>
+<%
+    } finally {
+        try { if (rs != null) rs.close(); } catch (Exception ignored) {}
+        try { if (stmt != null) stmt.close(); } catch (Exception ignored) {}
+        try { if (conn != null) conn.close(); } catch (Exception ignored) {}
+    }
+%>
+        </table>
+</body>
+</html>
