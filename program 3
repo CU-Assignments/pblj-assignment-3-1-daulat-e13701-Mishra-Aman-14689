@@ -1,0 +1,60 @@
+<%@ page import="java.sql.*" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+
+<%
+    // Database configuration
+    String jdbcURL = "jdbc:mysql://localhost:3306/your_database";
+    String dbUser = "your_username";
+    String dbPass = "your_password";
+
+    String studentName = request.getParameter("studentName");
+    String subject = request.getParameter("subject");
+    String date = request.getParameter("date");
+    String status = request.getParameter("status");
+
+    boolean formSubmitted = (studentName != null && subject != null && date != null && status != null);
+    boolean success = false;
+    String errorMessage = "";
+
+    if (formSubmitted) {
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            Connection conn = DriverManager.getConnection(jdbcURL, dbUser, dbPass);
+
+            String sql = "INSERT INTO attendance (student_name, subject, date, status) VALUES (?, ?, ?, ?)";
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setString(1, studentName);
+            ps.setString(2, subject);
+            ps.setDate(3, java.sql.Date.valueOf(date));
+            ps.setString(4, status);
+
+            int rows = ps.executeUpdate();
+            if (rows > 0) success = true;
+
+            ps.close();
+            conn.close();
+        } catch (Exception e) {
+            errorMessage = e.getMessage();
+        }
+    }
+%>
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Attendance Portal</title>
+</head>
+<body>
+    <h2>Student Attendance Portal</h2>
+
+    <% if (formSubmitted) { %>
+        <% if (success) { %>
+            <p style="color:green;">Attendance submitted successfully!</p>
+        <% } else { %>
+            <p style="color:red;">Error submitting attendance: <%= errorMessage %></p>
+        <% } %>
+        <a href="attendance.jsp">Submit Another</a>
+        <hr>
+    <% } %>
+
+    <form method="post" action="
